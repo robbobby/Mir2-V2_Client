@@ -8,7 +8,7 @@ namespace Login.Authentication {
         public PlayFabController(LoginController _loginController) : base(_loginController) { }
 
         public override void AttemptLogin(string _id, string _password) {
-            var request = new LoginWithPlayFabRequest() {
+            LoginWithPlayFabRequest request = new LoginWithPlayFabRequest() {
                 Username = _id,
                 Password = EncryptPassword(_password)
             };
@@ -28,16 +28,19 @@ namespace Login.Authentication {
         private void RegisterSuccess(RegisterPlayFabUserResult _result) {
             loginController.SetRegisterErrorText("");
         }
+        
         private void RegisterFailure(PlayFabError _result) {
             loginController.SetRegisterErrorText(_result.GenerateErrorReport());
         }
 
         public void LoginSuccess(LoginResult _result) {
-            loginController.SetLoginResultText(_result.PlayFabId);
+            loginController.SetLoginResultText(_result.SessionTicket);
         }
+        
         private void LoginFailure(PlayFabError _result) {
             loginController.SetLoginResultText(_result.GenerateErrorReport());
         }
+        
         private string EncryptPassword(string _password) {
             var data = System.Text.Encoding.ASCII.GetBytes(_password);
             data = new System.Security.Cryptography.SHA256Managed().ComputeHash(data);
