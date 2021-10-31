@@ -1,7 +1,11 @@
+using Config;
 using Login.Authentication;
+using Login.Authentication.PlayFab;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
+using Button = UnityEngine.UI.Button;
 namespace Login {
     public class LoginController : MonoBehaviour {
         [SerializeField] private GameObject loginPage;
@@ -18,7 +22,7 @@ namespace Login {
         [SerializeField] private Button registerAccountButton;
         [SerializeField] private TMP_Text registerErrorText;
         [SerializeField] private TMP_Text loginResult;
-        private ILoginAuthentication accountLogin;
+        private ILoginAuthentication authentication;
 
         public void SetRegisterErrorText(string _text) {
             registerErrorText.SetText(_text);
@@ -29,7 +33,7 @@ namespace Login {
         }
 
         private void Start() {
-            accountLogin = new PlayFabController(this);
+            authentication = ConfigurationService.GetAuthenticationProvider(this);
         }
 
         public void RegisterSuccess() {
@@ -38,7 +42,7 @@ namespace Login {
 
         public void LoginButtonClicked() {
             if (LoginCheck())
-                accountLogin.AttemptLogin(idLogin.text, passwordLogin.text);
+                authentication.AttemptLogin(idLogin.text, passwordLogin.text);
         }
         private bool LoginCheck() {
             if (idLogin.text.Contains(" ")) {
@@ -67,7 +71,7 @@ namespace Login {
                 registerErrorText.text = "The passwords don't match";
                 return;
             }
-            accountLogin.SignUp(emailRegister.text, idRegister.text, passwordRegister.text);
+            authentication.SignUp(emailRegister.text, idRegister.text, passwordRegister.text);
         }
 
         public void GoBackToLoginButtonClicked() {

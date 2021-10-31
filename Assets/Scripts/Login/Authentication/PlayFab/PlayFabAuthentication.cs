@@ -2,10 +2,10 @@ using PlayFab;
 using PlayFab.ClientModels;
 using PlayFabError = PlayFab.PlayFabError;
 
-namespace Login.Authentication {
-    public class PlayFabController : AuthenticationAbstract {
+namespace Login.Authentication.PlayFab {
+    public class PlayFabAuthentication : AuthenticationAbstract {
 
-        public PlayFabController(LoginController _loginController) : base(_loginController) { }
+        public PlayFabAuthentication(LoginController _loginController) : base(_loginController) { }
 
         public override void AttemptLogin(string _id, string _password) {
             LoginWithPlayFabRequest request = new LoginWithPlayFabRequest() {
