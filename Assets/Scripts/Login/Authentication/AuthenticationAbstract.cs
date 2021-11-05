@@ -1,11 +1,7 @@
 using UnityEngine;
 namespace Login.Authentication {
-    public abstract class AuthenticationAbstract : MonoBehaviour, ILoginAuthentication {
+    public abstract class AuthenticationAbstract : ILoginAuthentication {
         protected LoginController loginController;
-
-        protected AuthenticationAbstract(LoginController _loginController) {
-            loginController = _loginController;
-        }
         
         public LoginController LoginController { get; set; }
         
