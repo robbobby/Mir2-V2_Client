@@ -1,8 +1,9 @@
 namespace HttpClientAccess {
-    internal enum UnityWebRequestType {
+    public enum UnityWebRequestType {
         Get,
         Post,
         Put,
         Delete
     }
+
 }

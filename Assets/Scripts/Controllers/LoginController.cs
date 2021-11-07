@@ -64,7 +64,7 @@ namespace Login {
 
         public void RegisterAccountButtonClicked() {
             if (CheckValidRegisterDetails()) return;
-            authentication.SignUp(emailRegister.text, idRegister.text, passwordRegister.text);
+            authentication.AttemptRegisterRequest(emailRegister.text, idRegister.text, passwordRegister.text);
             var x = new AccountRegisterDtoC2S("", "", "", "username", "password");
             Debug.Log(JsonConvert.SerializeObject(x));
         }
