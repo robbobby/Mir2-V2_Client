@@ -1,11 +1,12 @@
+using DefaultNamespace;
 using Login.Authentication;
-using Newtonsoft.Json;
-using SharedModels_Mir2_V2.AccountDto;
+using SharedModels_Mir2_V2.Enums;
 using TMPro;
 using UnityEngine;
 using Zenject;
 using Button = UnityEngine.UI.Button;
-namespace Login {
+
+namespace Controllers {
     public class LoginController : MonoBehaviour {
         [SerializeField] private GameObject loginPage;
         [SerializeField] private GameObject registerPage;
@@ -21,7 +22,7 @@ namespace Login {
         [SerializeField] private Button registerAccountButton;
         [SerializeField] private TMP_Text registerErrorText;
         [SerializeField] private TMP_Text loginResult;
-        
+
         [Inject]
         private ILoginAuthentication authentication;
 
@@ -62,31 +63,55 @@ namespace Login {
         }
 
 
-        public void RegisterAccountButtonClicked() {
-            if (CheckValidRegisterDetails()) return;
-            authentication.AttemptRegisterRequest(emailRegister.text, idRegister.text, passwordRegister.text);
-            var x = new AccountRegisterDtoC2S("", "", "", "username", "password");
-            Debug.Log(JsonConvert.SerializeObject(x));
+        public async void RegisterAccountButtonClicked() {
+            if (!CheckValidRegisterDetails()) return;
+            
+            AccountRegisterResult registerResult = await authentication.AttemptRegisterRequest(emailRegister.text, idRegister.text, passwordRegister.text);
+            if (registerResult != AccountRegisterResult.Success)
+                registerErrorText.text = StringHelper.PascalToSentence(registerResult.ToString());
+            else
+                registerErrorText.text = StringHelper.PascalToSentence(AccountRegisterResult.Success.ToString()); // TODO: Delete this and redirect back to login once tests are done.
+
+        }
+        bool IsValidEmail(string _email)
+        {
+            if (_email.Trim().EndsWith(".")) {
+                return false; // suggested by @TK-421
+            }
+            try {
+                var addr = new System.Net.Mail.MailAddress(_email);
+                return addr.Address == _email;
+            }
+            catch {
+                return false;
+            }
         }
         private bool CheckValidRegisterDetails() {
 
             if (passwordRegister.text.Length < 5) {
                 registerErrorText.text = "Your password must be at least 5 characters long";
-                return true;
+                return false;
             }
             if (passwordRegister.text != password2Register.text) {
                 registerErrorText.text = "The passwords don't match";
-                return true;
+                return false;
             }
-            return false;
+
+            if (password2Register.text.Contains(" ")) {
+                registerErrorText.text = "Password cannot contain spaces";
+                return false;
+            }
+            if (!IsValidEmail(emailRegister.text)) {
+                registerErrorText.text = "Not a valid email";
+                return false;
+            }
+            return true;
         }
 
-        public void GoBackToLoginButtonClicked() {
-            ShowLoginPage();
-        }
-        public void GoToRegisterButtonClicked() {
-            ShowRegisterPage();
-        }
+        public void GoBackToLoginButtonClicked() => ShowLoginPage();
+        
+        public void GoToRegisterButtonClicked() => ShowRegisterPage();
+        
         private void ShowLoginPage() {
             loginPage.SetActive(true);
             registerPage.SetActive(false);
@@ -105,7 +130,5 @@ namespace Login {
             idLogin.text = "";
             passwordLogin.text = "";
         }
-        
-        
     }
 }

@@ -1,7 +1,7 @@
 using System;
+using Controllers;
 using Login;
 using Login.Authentication;
-using Login.Authentication.HttpClient;
 namespace Config {
     public class AccountServiceConfig {
         public static ILoginAuthentication GetAuthenciationProvider(AuthenticationProvider provider, LoginController _loginController) {

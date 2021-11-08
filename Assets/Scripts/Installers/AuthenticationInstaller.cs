@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using Login.Authentication;
-using Login.Authentication.HttpClient;
 using Login.HttpClientAccess;
 using UnityEngine;
 using UnityEngine.Networking;

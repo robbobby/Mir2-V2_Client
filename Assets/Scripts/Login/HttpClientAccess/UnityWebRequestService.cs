@@ -1,39 +1,34 @@
-using System.Collections.Generic;
+using System;
 using System.Text;
 using System.Threading.Tasks;
 using HttpClientAccess;
 using Login.Authentication;
-using ModestTree;
 using Newtonsoft.Json;
 using SharedModels_Mir2_V2.AccountDto;
-using SharedModels_Mir2_V2.BaseModels;
 using SharedModels_Mir2_V2.Enums;
 using UnityEngine;
 using UnityEngine.Networking;
-
 namespace Login.HttpClientAccess {
     public class UnityWebRequestService : ILoginAuthentication {
-        private static string baseUrl = "http://localhost:5000";
+        private static readonly string baseUrl = "http://localhost:5000";
 
-        private async Task MakeRequest<T>(AccountRegisterDtoC2S _account, UnityWebRequestType _requestType) {
-            UnityWebRequest getRequest = CreateRequest(RegisterAccountString(), UnityWebRequestType.Post, _account);
-            UnityWebRequestAsyncOperation x = getRequest.SendWebRequest();
-            Debug.Log("Hello");
-            while (!x.isDone) {
-                await Task.Yield();
-            }
-            Debug.Log(getRequest.result);
-            
-            if (getRequest.result == UnityWebRequest.Result.Success) {
-                AccountRegisterResult y = JsonConvert.DeserializeObject<AccountRegisterResult>(getRequest.downloadHandler.text);
-                Debug.Log(y);
-            }
+        private async Task<UnityWebRequest> MakeRequest(AccountRegisterDtoC2S _account, UnityWebRequestType _requestType) {
+            UnityWebRequest getRequest = CreateRequest(RegisterAccountString(), _requestType, _account);
+            UnityWebRequestAsyncOperation webRequestOperation = getRequest.SendWebRequest();
+            while (!webRequestOperation.isDone) await Task.Yield();
+
+            return webRequestOperation.webRequest;
         }
-        
+
+        private T MapJsonBodyToObject<T>(string jsonBody) {
+            T result = JsonConvert.DeserializeObject<T>(jsonBody);
+            return result;
+        }
+
         private UnityWebRequest CreateRequest(string _path, UnityWebRequestType _requestType = UnityWebRequestType.Get, object _data = null) {
             UnityWebRequest request = new UnityWebRequest(_path, _requestType.ToString());
-            
-            if(_data != null) {
+
+            if (_data != null) {
                 var jsonString = JsonConvert.SerializeObject(_data, Formatting.None);
                 var bodyRaw = Encoding.UTF8.GetBytes(jsonString);
                 request.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -50,18 +45,38 @@ namespace Login.HttpClientAccess {
         }
 
 
-        private string GetRequestString(int _id) => $"{baseUrl}/Account/GetAccount?{_id}";
+        private string GetRequestString(int _id) {
+            return $"{baseUrl}/Account/GetAccount?{_id}";
+        }
 
-        private string RegisterAccountString() => $"{baseUrl}/Account/RegisterNewAccount";
+        private string RegisterAccountString() {
+            return $"{baseUrl}/Account/RegisterNewAccount";
+        }
 
         public void AttemptLogin(string _id, string _password) {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
-        
-        public AccountRegisterResult AttemptRegisterRequest(string _email, string _id, string _password) {
+
+        public async Task<AccountRegisterResult> AttemptRegisterRequest(string _email, string _id, string _password) {
             AccountRegisterDtoC2S account = new AccountRegisterDtoC2S("", "", _id, _password, _email);
-            var x =  MakeRequest<AccountRegisterResult>(account, UnityWebRequestType.Post);
-            return AccountRegisterResult.Success;
+            UnityWebRequest webRequest = await MakeRequest(account, UnityWebRequestType.Post);
+
+            AccountRegisterResult accountRegisterResult;
+            switch (webRequest.result) {
+                case UnityWebRequest.Result.Success:
+                    return MapJsonBodyToObject<AccountRegisterResult>(webRequest.downloadHandler.text);
+                case UnityWebRequest.Result.InProgress:
+                    return AccountRegisterResult.InProgress;
+                case UnityWebRequest.Result.ConnectionError:
+                    return AccountRegisterResult.ConnectionError;
+                case UnityWebRequest.Result.ProtocolError:
+                    return AccountRegisterResult.ProtocolError;
+                case UnityWebRequest.Result.DataProcessingError:
+                    return AccountRegisterResult.DataProcessingError;
+                default:
+                    return AccountRegisterResult.UnknownError;
+            }
+            Debug.Log(accountRegisterResult);
         }
     }
 }
