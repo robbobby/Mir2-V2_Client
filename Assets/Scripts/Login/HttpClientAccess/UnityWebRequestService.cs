@@ -5,15 +5,16 @@ using HttpClientAccess;
 using Login.Authentication;
 using Newtonsoft.Json;
 using SharedModels_Mir2_V2.AccountDto;
+using SharedModels_Mir2_V2.AccountDto.LoginDto;
 using SharedModels_Mir2_V2.Enums;
 using UnityEngine;
 using UnityEngine.Networking;
 namespace Login.HttpClientAccess {
     public class UnityWebRequestService : ILoginAuthentication {
-        private static readonly string baseUrl = "http://localhost:5000";
+        private static readonly string BaseUrl = "http://localhost:5000";
 
-        private async Task<UnityWebRequest> MakeRequest(AccountRegisterDtoC2S _account, UnityWebRequestType _requestType) {
-            UnityWebRequest getRequest = CreateRequest(RegisterAccountString(), _requestType, _account);
+        private async Task<UnityWebRequest> MakeRequest(AccountRegisterDtoC2S account, UnityWebRequestType requestType) {
+            UnityWebRequest getRequest = CreateRequest(RegisterAccountString(), requestType, account);
             UnityWebRequestAsyncOperation webRequestOperation = getRequest.SendWebRequest();
             while (!webRequestOperation.isDone) await Task.Yield();
 
@@ -25,11 +26,11 @@ namespace Login.HttpClientAccess {
             return result;
         }
 
-        private UnityWebRequest CreateRequest(string _path, UnityWebRequestType _requestType = UnityWebRequestType.Get, object _data = null) {
-            UnityWebRequest request = new UnityWebRequest(_path, _requestType.ToString());
+        private UnityWebRequest CreateRequest(string _path, UnityWebRequestType requestType = UnityWebRequestType.Get, object data = null) {
+            UnityWebRequest request = new UnityWebRequest(_path, requestType.ToString());
 
-            if (_data != null) {
-                var jsonString = JsonConvert.SerializeObject(_data, Formatting.None);
+            if (data != null) {
+                var jsonString = JsonConvert.SerializeObject(data, Formatting.None);
                 var bodyRaw = Encoding.UTF8.GetBytes(jsonString);
                 request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             }
@@ -40,25 +41,25 @@ namespace Login.HttpClientAccess {
             return request;
         }
 
-        private void AttachHeader(UnityWebRequest _request, string _key, string _value) {
-            _request.SetRequestHeader(_key, _value);
+        private void AttachHeader(UnityWebRequest request, string key, string value) {
+            request.SetRequestHeader(key, value);
         }
 
 
-        private string GetRequestString(int _id) {
-            return $"{baseUrl}/Account/GetAccount?{_id}";
+        private string GetRequestString(int id) {
+            return $"{BaseUrl}/Account/GetAccount?{id}";
         }
 
         private string RegisterAccountString() {
-            return $"{baseUrl}/Account/RegisterNewAccount";
+            return $"{BaseUrl}/Account/RegisterNewAccount";
         }
 
-        public void AttemptLogin(string _id, string _password) {
-            throw new NotImplementedException();
+        public void AttemptLogin(string id, string password) {
+            AccountLoginDtoC2S account = new AccountLoginDtoC2S(id, password);
         }
 
-        public async Task<AccountRegisterResult> AttemptRegisterRequest(string _email, string _id, string _password) {
-            AccountRegisterDtoC2S account = new AccountRegisterDtoC2S("", "", _id, _password, _email);
+        public async Task<AccountRegisterResult> AttemptRegisterRequest(string email, string id, string password) {
+            AccountRegisterDtoC2S account = new AccountRegisterDtoC2S("", "", id, password, email);
             UnityWebRequest webRequest = await MakeRequest(account, UnityWebRequestType.Post);
 
             AccountRegisterResult accountRegisterResult;

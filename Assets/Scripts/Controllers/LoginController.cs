@@ -26,12 +26,12 @@ namespace Controllers {
         [Inject]
         private ILoginAuthentication authentication;
 
-        public void SetRegisterErrorText(string _text) {
-            registerErrorText.SetText(_text);
+        public void SetRegisterErrorText(string text) {
+            registerErrorText.SetText(text);
         }
 
-        public void SetLoginResultText(string _text) {
-            loginResult.SetText(_text);
+        public void SetLoginResultText(string text) {
+            loginResult.SetText(text);
         }
 
         private void Start() {
@@ -58,14 +58,14 @@ namespace Controllers {
                 loginResult.SetText("Password must contain at least 6 characters");
                 return false;
             }
-            
+
             return true;
         }
 
 
         public async void RegisterAccountButtonClicked() {
             if (!CheckValidRegisterDetails()) return;
-            
+
             AccountRegisterResult registerResult = await authentication.AttemptRegisterRequest(emailRegister.text, idRegister.text, passwordRegister.text);
             if (registerResult != AccountRegisterResult.Success)
                 registerErrorText.text = StringHelper.PascalToSentence(registerResult.ToString());
@@ -73,16 +73,14 @@ namespace Controllers {
                 registerErrorText.text = StringHelper.PascalToSentence(AccountRegisterResult.Success.ToString()); // TODO: Delete this and redirect back to login once tests are done.
 
         }
-        bool IsValidEmail(string _email)
-        {
-            if (_email.Trim().EndsWith(".")) {
+        bool IsValidEmail(string email) {
+            if (email.Trim().EndsWith(".")) {
                 return false; // suggested by @TK-421
             }
             try {
-                var addr = new System.Net.Mail.MailAddress(_email);
-                return addr.Address == _email;
-            }
-            catch {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            } catch {
                 return false;
             }
         }
@@ -109,9 +107,9 @@ namespace Controllers {
         }
 
         public void GoBackToLoginButtonClicked() => ShowLoginPage();
-        
+
         public void GoToRegisterButtonClicked() => ShowRegisterPage();
-        
+
         private void ShowLoginPage() {
             loginPage.SetActive(true);
             registerPage.SetActive(false);
