@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using HttpClientAccess;
 using Login.Authentication;
 using Newtonsoft.Json;
+using SharedModels_Mir2_V2;
 using SharedModels_Mir2_V2.AccountDto;
 using SharedModels_Mir2_V2.AccountDto.LoginDto;
 using SharedModels_Mir2_V2.Enums;
@@ -44,7 +45,7 @@ namespace Login.HttpClientAccess {
         private void AttachHeader(UnityWebRequest request, string key, string value) {
             request.SetRequestHeader(key, value);
         }
-        
+
         private string GetRequestString(int id) {
             return $"{BaseUrl}/Account/GetAccount?{id}";
         }
@@ -53,17 +54,17 @@ namespace Login.HttpClientAccess {
             return $"{BaseUrl}/Account/RegisterNewAccount";
         }
 
-        public async Task<AccountLoginDtoS2C> AttemptLogin(string id, string password) {
+        public async Task<AccountLoginResult> AttemptLogin(string id, string password) {
             AccountLoginDtoC2S accountDto = new AccountLoginDtoC2S(id, password);
-            UnityWebRequest webRequest = await MakeRequest(accountDto, new RegisterAccount());
+            UnityWebRequest webRequest = await MakeRequest(accountDto, new LoginAccount());
 
             AccountLoginDtoS2C accountReply;
-
+            Debug.Log(webRequest.result);
             if (webRequest.result == UnityWebRequest.Result.Success)
-                return MapJsonBodyToObject<AccountLoginDtoS2C>(webRequest.downloadHandler.text);
+                return MapJsonBodyToObject<AccountLoginResult>(webRequest.downloadHandler.text);
             throw new Exception();
         }
-
+        
         public async Task<AccountRegisterResult> AttemptRegisterRequest(string email, string id, string password) {
             AccountRegisterDtoC2S account = new AccountRegisterDtoC2S("", "", id, password, email);
             UnityWebRequest webRequest = await MakeRequest(account, new RegisterAccount());
@@ -86,6 +87,7 @@ namespace Login.HttpClientAccess {
             Debug.Log(accountRegisterResult);
         }
     }
+
     internal interface IUnityWebRequest {
         public UnityWebRequestType WebRequestType { get; set; }
         public string EndPointAddress { get; set; }
@@ -98,6 +100,16 @@ namespace Login.HttpClientAccess {
         public RegisterAccount() {
             WebRequestType = UnityWebRequestType.Post;
             EndPointAddress = $"{UnityWebRequestService.BaseUrl}/Account/RegisterNewAccount";
+        }
+    }
+
+    internal class LoginAccount : IUnityWebRequest {
+
+        public UnityWebRequestType WebRequestType { get; set; }
+        public string EndPointAddress { get; set; }
+        public LoginAccount() {
+            WebRequestType = UnityWebRequestType.Post;
+            EndPointAddress = $"{UnityWebRequestService.BaseUrl}/Account/GetAccount";
         }
     }
 }

@@ -1,5 +1,8 @@
+using System.Threading.Tasks;
 using DefaultNamespace;
 using Login.Authentication;
+using SharedModels_Mir2_V2;
+using SharedModels_Mir2_V2.AccountDto.LoginDto;
 using SharedModels_Mir2_V2.Enums;
 using TMPro;
 using UnityEngine;
@@ -41,9 +44,15 @@ namespace Controllers {
             ShowLoginPage();
         }
 
-        public void LoginButtonClicked() {
+        public async void LoginButtonClicked() {
+            AccountLoginResult loginResult = null;
             if (LoginCheck())
-                authentication.AttemptLogin(idLogin.text, passwordLogin.text);
+                loginResult = await authentication.AttemptLogin(idLogin.text, passwordLogin.text);
+            registerErrorText.text = StringHelper.PascalToSentence(loginResult?.LoginResult.ToString());
+            Debug.Log(loginResult.LoginResult.ToString());
+            Debug.Log(loginResult.Account.SessionToken);
+            Debug.Log(loginResult.Account.Id);
+            
         }
         private bool LoginCheck() {
             if (idLogin.text.Contains(" ")) {

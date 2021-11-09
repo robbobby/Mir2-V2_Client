@@ -1,4 +1,4 @@
-namespace HttpClientAccess {
+namespace Login.HttpClientAccess {
     public enum UnityWebRequestType {
         Get,
         Post,
