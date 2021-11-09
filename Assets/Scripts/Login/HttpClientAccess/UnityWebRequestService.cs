@@ -11,10 +11,10 @@ using UnityEngine;
 using UnityEngine.Networking;
 namespace Login.HttpClientAccess {
     public class UnityWebRequestService : ILoginAuthentication {
-        private static readonly string BaseUrl = "http://localhost:5000";
+        internal static readonly string BaseUrl = "http://localhost:5000";
 
-        private async Task<UnityWebRequest> MakeRequest(AccountRegisterDtoC2S account, UnityWebRequestType requestType) {
-            UnityWebRequest getRequest = CreateRequest(RegisterAccountString(), requestType, account);
+        private async Task<UnityWebRequest> MakeRequest<T>(T account, IUnityWebRequest requestType) {
+            UnityWebRequest getRequest = CreateRequest(requestType.EndPointAddress, requestType.WebRequestType, account);
             UnityWebRequestAsyncOperation webRequestOperation = getRequest.SendWebRequest();
             while (!webRequestOperation.isDone) await Task.Yield();
 
@@ -26,8 +26,8 @@ namespace Login.HttpClientAccess {
             return result;
         }
 
-        private UnityWebRequest CreateRequest(string _path, UnityWebRequestType requestType = UnityWebRequestType.Get, object data = null) {
-            UnityWebRequest request = new UnityWebRequest(_path, requestType.ToString());
+        private UnityWebRequest CreateRequest(string path, UnityWebRequestType requestType = UnityWebRequestType.Get, object data = null) {
+            UnityWebRequest request = new UnityWebRequest(path, requestType.ToString());
 
             if (data != null) {
                 var jsonString = JsonConvert.SerializeObject(data, Formatting.None);
@@ -44,8 +44,7 @@ namespace Login.HttpClientAccess {
         private void AttachHeader(UnityWebRequest request, string key, string value) {
             request.SetRequestHeader(key, value);
         }
-
-
+        
         private string GetRequestString(int id) {
             return $"{BaseUrl}/Account/GetAccount?{id}";
         }
@@ -54,13 +53,20 @@ namespace Login.HttpClientAccess {
             return $"{BaseUrl}/Account/RegisterNewAccount";
         }
 
-        public void AttemptLogin(string id, string password) {
-            AccountLoginDtoC2S account = new AccountLoginDtoC2S(id, password);
+        public async Task<AccountLoginDtoS2C> AttemptLogin(string id, string password) {
+            AccountLoginDtoC2S accountDto = new AccountLoginDtoC2S(id, password);
+            UnityWebRequest webRequest = await MakeRequest(accountDto, new RegisterAccount());
+
+            AccountLoginDtoS2C accountReply;
+
+            if (webRequest.result == UnityWebRequest.Result.Success)
+                return MapJsonBodyToObject<AccountLoginDtoS2C>(webRequest.downloadHandler.text);
+            throw new Exception();
         }
 
         public async Task<AccountRegisterResult> AttemptRegisterRequest(string email, string id, string password) {
             AccountRegisterDtoC2S account = new AccountRegisterDtoC2S("", "", id, password, email);
-            UnityWebRequest webRequest = await MakeRequest(account, UnityWebRequestType.Post);
+            UnityWebRequest webRequest = await MakeRequest(account, new RegisterAccount());
 
             AccountRegisterResult accountRegisterResult;
             switch (webRequest.result) {
@@ -78,6 +84,20 @@ namespace Login.HttpClientAccess {
                     return AccountRegisterResult.UnknownError;
             }
             Debug.Log(accountRegisterResult);
+        }
+    }
+    internal interface IUnityWebRequest {
+        public UnityWebRequestType WebRequestType { get; set; }
+        public string EndPointAddress { get; set; }
+    }
+
+    internal class RegisterAccount : IUnityWebRequest {
+
+        public UnityWebRequestType WebRequestType { get; set; }
+        public string EndPointAddress { get; set; }
+        public RegisterAccount() {
+            WebRequestType = UnityWebRequestType.Post;
+            EndPointAddress = $"{UnityWebRequestService.BaseUrl}/Account/RegisterNewAccount";
         }
     }
 }
